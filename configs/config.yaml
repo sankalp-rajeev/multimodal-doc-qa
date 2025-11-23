@@ -1,0 +1,15 @@
+project:
+  name: multimodal-doc-qa
+  description: "Document Question-Answering using BERT baseline + LayoutLMv3"
+  author: "Sankarsh Rajeev"
+  version: "1.0"
+
+paths:
+  raw_data: "data/raw"
+  processed_data: "data/processed"
+  layout_docs: "data/processed/funsd_layout_docs.jsonl"
+  qa_file: "data/processed/funsd_qa.jsonl"
+  train_split: "data/processed/funsd_qa_train.jsonl"
+  val_split: "data/processed/funsd_qa_val.jsonl"
+  test_split: "data/processed/funsd_qa_test.jsonl"
+  models_dir: "models"

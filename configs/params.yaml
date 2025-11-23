@@ -1,0 +1,43 @@
+training:
+  model_name: "bert-base-uncased"
+
+  # Core Hyperparameters (SAFE MODE - Option A)
+  learning_rate: 5e-5
+  batch_size: 2
+  num_train_epochs: 12
+  max_seq_length: 512
+  weight_decay: 0.0005    
+
+  # Scheduler
+  warmup_ratio: 0.1
+
+  # Gradient Accumulation + Clipping
+  grad_accum_steps: 4
+  max_grad_norm: 1.0
+
+  # Random Seed
+  seed: 42
+
+layout_training:
+  model_name: "microsoft/layoutlmv3-base"
+
+  # Data
+  train_path: "data/processed/funsd_layoutlmv3_train.jsonl"
+  val_path: "data/processed/funsd_layoutlmv3_val.jsonl"
+
+  # Sequence / model
+  max_seq_length: 512
+
+  batch_size: 4                
+  num_train_epochs: 20         
+  learning_rate: 3e-5          
+  weight_decay: 0.01
+  warmup_ratio: 0.1
+  grad_accum_steps: 4         
+  max_grad_norm: 1.0
+
+  # Misc
+  seed: 42
+  num_workers: 0               
+  output_dir: "models/layoutlmv3/best_model"
+

@@ -1,0 +1,78 @@
+# -------------------------
+# Python
+# -------------------------
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pkl
+*.so
+*.egg-info/
+*.egg
+dist/
+build/
+
+# -------------------------
+# Virtual Environments
+# -------------------------
+venv/
+.env/
+.venv/
+env/
+ENV/
+
+# -------------------------
+# Jupyter
+# -------------------------
+.ipynb_checkpoints/
+.jupyter/
+*.nbconvert/
+
+# -------------------------
+# Deep Learning / ML Artifacts
+# -------------------------
+
+# Model weights, checkpoints
+*.pt
+*.pth
+*.ckpt
+*.h5
+*.onnx
+checkpoints/
+models/
+saved_models/
+outputs/
+export/
+
+# Training logs
+logs/
+wandb/
+tensorboard/
+tb_logs/
+lightning_logs/
+
+# Large temporary files
+tmp/
+temp/
+cache/
+*.npy
+*.npz
+
+# -------------------------
+# Data folders (user request: exclude datasets from repo)
+# -------------------------
+data/
+
+# -------------------------
+# IDE / Editor Stuff
+# -------------------------
+.vscode/
+.idea/
+
+# -------------------------
+# OS
+# -------------------------
+.DS_Store
+Thumbs.db
+
+

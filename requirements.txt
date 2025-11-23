@@ -1,0 +1,9 @@
+torch
+transformers
+datasets
+seqeval
+python-dotenv
+pyyaml
+tqdm
+Pillow
+matplotlib
