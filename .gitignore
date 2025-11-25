@@ -62,6 +62,8 @@ cache/
 # Data folders (user request: exclude datasets from repo)
 # -------------------------
 data/
+/models/
+/debug/
 
 # -------------------------
 # IDE / Editor Stuff
@@ -75,4 +77,11 @@ data/
 .DS_Store
 Thumbs.db
 
+# Environment variable files
+.env
+*.env
 
+# Gradio temp files
+.gradio/
+
+/reports/

@@ -41,3 +41,40 @@ layout_training:
   num_workers: 0               
   output_dir: "models/layoutlmv3/best_model"
 
+vision_training:
+  model_name: "microsoft/layoutlmv3-base"
+  
+  # Data
+  train_path: "data/processed/funsd_layoutlmv3_train.jsonl"
+  val_path: "data/processed/funsd_layoutlmv3_val.jsonl"
+  
+  # Training
+  max_seq_length: 512
+  batch_size: 2              # Keep small (images are memory-intensive)
+  num_train_epochs: 20
+  learning_rate: 0.00003     # 3e-5
+  weight_decay: 0.01
+  warmup_ratio: 0.1
+  grad_accum_steps: 4
+  max_grad_norm: 1.0
+  
+  seed: 42
+  num_workers: 0
+  output_dir: "models/layoutlmv3_vision/best_model"
+
+  multitask_training:
+  model_name: "microsoft/layoutlmv3-base"
+  
+  # Data paths handled in code
+  
+  # Training
+  batch_size: 2
+  num_train_epochs: 15
+  learning_rate: 0.00003  # 3e-5
+  weight_decay: 0.01
+  warmup_ratio: 0.1
+  grad_accum_steps: 4
+  max_grad_norm: 1.0
+  
+  seed: 42
+  output_dir: "models/multitask/best_model"
