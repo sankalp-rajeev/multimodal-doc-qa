@@ -61,7 +61,7 @@ cache/
 # -------------------------
 # Data folders (user request: exclude datasets from repo)
 # -------------------------
-data/
+/data/
 /models/
 /debug/
 

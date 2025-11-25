@@ -27,7 +27,7 @@ from transformers import (
     BertConfig,
     LayoutLMv3Config,
 )
-from src.models.multitask_model import LayoutLMv3ForMultiTask
+from src.Models_src.multitask_model import LayoutLMv3ForMultiTask
 import pytesseract
 from pytesseract import Output
 pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
