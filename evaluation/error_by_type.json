@@ -1,0 +1,46 @@
+{
+  "categories": [
+    "Date",
+    "Name",
+    "Address",
+    "Amount",
+    "Other"
+  ],
+  "counts": {
+    "Date": 37,
+    "Name": 59,
+    "Address": 6,
+    "Amount": 23,
+    "Other": 402
+  },
+  "accuracies": {
+    "Model 1: BERT": {
+      "Date": 35.14,
+      "Name": 16.95,
+      "Address": 0.0,
+      "Amount": 30.43,
+      "Other": 16.17
+    },
+    "Model 2: LayoutLMv3": {
+      "Date": 67.57,
+      "Name": 40.68,
+      "Address": 33.33,
+      "Amount": 56.52,
+      "Other": 42.04
+    },
+    "Model 3: +Vision": {
+      "Date": 72.97,
+      "Name": 38.98,
+      "Address": 33.33,
+      "Amount": 52.17,
+      "Other": 41.04
+    },
+    "Model 4: Multi-Task": {
+      "Date": 59.46,
+      "Name": 25.42,
+      "Address": 33.33,
+      "Amount": 56.52,
+      "Other": 36.57
+    }
+  }
+}

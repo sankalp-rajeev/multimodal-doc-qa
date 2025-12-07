@@ -8,7 +8,8 @@ import numpy as np
 import plotly.graph_objects as go
 import plotly.express as px
 from plotly.subplots import make_subplots
-
+import json
+from pathlib import Path
 
 def show_advanced_metrics():
     """Display advanced evaluation metrics"""
@@ -25,81 +26,151 @@ def show_advanced_metrics():
     # ============================================
     # SECTION 1: ANSWER LENGTH ANALYSIS
     # ============================================
+# ============================================
+    # SECTION 1: ANSWER LENGTH ANALYSIS
+    # ============================================
     st.subheader("1️⃣ Answer Length Distribution")
     
-    col1, col2 = st.columns([2, 1])
+    # Load REAL data
+    stats_file = Path("evaluation/answer_length_statistics.json")
+    if stats_file.exists():
+        with open(stats_file, 'r') as f:
+            real_stats = json.load(f)
+        
+        col1, col2 = st.columns([2, 1])
+        
+        with col1:
+            # Filter data to reasonable range (0-30 words) for better visualization
+            def filter_outliers(data, max_val=30):
+                """Keep only values <= max_val for cleaner visualization"""
+                return [x for x in data if x <= max_val]
+            
+            bert_filtered = filter_outliers(real_stats["Model 1: BERT"]["distribution"])
+            layout_filtered = filter_outliers(real_stats["Model 2: LayoutLMv3"]["distribution"])
+            vision_filtered = filter_outliers(real_stats["Model 3: +Vision"]["distribution"])
+            multitask_filtered = filter_outliers(real_stats["Model 4: Multi-Task"]["distribution"])
+            
+            # Calculate % of data shown
+            bert_pct = len(bert_filtered) / len(real_stats["Model 1: BERT"]["distribution"]) * 100
+            
+            # Create histogram with REAL data (filtered for clarity)
+            fig = go.Figure()
+            
+            # Model 1 - BERT
+            fig.add_trace(go.Histogram(
+                x=bert_filtered,
+                name='Model 1: BERT',
+                opacity=0.75,
+                marker_color='#CD7F32',
+                nbinsx=30,
+                histnorm='probability',  # Show as percentages
+            ))
+            
+            # Model 2 - LayoutLMv3
+            fig.add_trace(go.Histogram(
+                x=layout_filtered,
+                name='Model 2: LayoutLMv3',
+                opacity=0.75,
+                marker_color='#C0C0C0',
+                nbinsx=30,
+                histnorm='probability',
+            ))
+            
+            # Model 3 - +Vision
+            fig.add_trace(go.Histogram(
+                x=vision_filtered,
+                name='Model 3: +Vision',
+                opacity=0.75,
+                marker_color='#FFD700',
+                nbinsx=30,
+                histnorm='probability',
+            ))
+            
+            # Model 4 - Multi-Task
+            fig.add_trace(go.Histogram(
+                x=multitask_filtered,
+                name='Model 4: Multi-Task',
+                opacity=0.75,
+                marker_color='#9370DB',
+                nbinsx=30,
+                histnorm='probability',
+            ))
+            
+            fig.update_layout(
+                title=f"Predicted Answer Length Distribution (0-30 words, {bert_pct:.1f}% of data)",
+                xaxis_title="Answer Length (words)",
+                yaxis_title="Probability (%)",
+                barmode='overlay',
+                height=450,
+                xaxis=dict(range=[0, 31], tickmode='linear', tick0=0, dtick=5),
+                yaxis=dict(tickformat='.1%'),
+                legend=dict(
+                    orientation="v",
+                    yanchor="top",
+                    y=0.98,
+                    xanchor="right",
+                    x=0.98,
+                    bgcolor="rgba(255,255,255,0.8)"
+                ),
+                font=dict(size=12)
+            )
+            
+            st.plotly_chart(fig,width='stretch')
+            
+            # Add note about outliers
+            outlier_counts = {
+                "BERT": len(real_stats["Model 1: BERT"]["distribution"]) - len(bert_filtered),
+                "LayoutLMv3": len(real_stats["Model 2: LayoutLMv3"]["distribution"]) - len(layout_filtered),
+                "+Vision": len(real_stats["Model 3: +Vision"]["distribution"]) - len(vision_filtered),
+                "Multi-Task": len(real_stats["Model 4: Multi-Task"]["distribution"]) - len(multitask_filtered)
+            }
+            
+            if any(outlier_counts.values()):
+                st.caption(f"📊 **Note**: Outliers (>30 words) excluded for clarity: "
+                          f"BERT={outlier_counts['BERT']}, "
+                          f"LayoutLMv3={outlier_counts['LayoutLMv3']}, "
+                          f"Vision={outlier_counts['+Vision']}, "
+                          f"Multi-Task={outlier_counts['Multi-Task']}")
+        
+        with col2:
+            st.markdown("### 📊 Real Statistics")
+            
+            # Display actual statistics
+            bert_stats = real_stats["Model 1: BERT"]
+            layout_stats = real_stats["Model 2: LayoutLMv3"]
+            vision_stats = real_stats["Model 3: +Vision"]
+            multitask_stats = real_stats["Model 4: Multi-Task"]
+            
+            st.info(f"""
+            **Average Answer Length:**
+            - Model 1 (BERT): **{bert_stats['mean']:.1f}** words
+            - Model 2 (LayoutLMv3): **{layout_stats['mean']:.1f}** words
+            - Model 3 (+Vision): **{vision_stats['mean']:.1f}** words  
+            - Model 4 (Multi-Task): **{multitask_stats['mean']:.1f}** words
+            
+            **Median (all models): {bert_stats['median']:.0f} words**
+            """)
+            
+            st.warning(f"""
+            **Variability (Std Dev):**
+            - BERT: ±{bert_stats['std']:.1f} (highly inconsistent)
+            - LayoutLMv3: ±{layout_stats['std']:.1f}
+            - +Vision: ±{vision_stats['std']:.1f}
+            - Multi-Task: ±{multitask_stats['std']:.1f} ✓ most stable
+            """)
+            
+            st.success(f"""
+            **Range:**
+            - BERT: [{bert_stats['min']}, {bert_stats['max']}] words
+            - LayoutLMv3: [{layout_stats['min']}, {layout_stats['max']}]
+            - +Vision: [{vision_stats['min']}, {vision_stats['max']}]
+            - Multi-Task: [{multitask_stats['min']}, {multitask_stats['max']}]
+            
+            **Insight**: Multi-task learning provides best calibration (lowest std dev).
+            """)
     
-    with col1:
-        # Simulate answer length data (replace with actual data)
-        models = ['Model 1: BERT', 'Model 2: LayoutLMv3', 'Model 3: +Vision', 'Model 4: Multi-Task']
-        
-        # Create histogram data
-        fig = go.Figure()
-        
-        # Model 1 - tends to predict longer answers
-        fig.add_trace(go.Histogram(
-            x=np.random.normal(8, 3, 527),
-            name='Model 1: BERT',
-            opacity=0.7,
-            marker_color='#CD7F32',
-            nbinsx=20
-        ))
-        
-        # Model 2 - better calibrated
-        fig.add_trace(go.Histogram(
-            x=np.random.normal(5, 2, 527),
-            name='Model 2: LayoutLMv3',
-            opacity=0.7,
-            marker_color='#C0C0C0',
-            nbinsx=20
-        ))
-        
-        # Model 3 - similar to Model 2
-        fig.add_trace(go.Histogram(
-            x=np.random.normal(5.2, 2.1, 527),
-            name='Model 3: +Vision',
-            opacity=0.7,
-            marker_color='#FFD700',
-            nbinsx=20
-        ))
-        
-        # Model 4 - slightly shorter (more conservative)
-        fig.add_trace(go.Histogram(
-            x=np.random.normal(4.5, 2, 527),
-            name='Model 4: Multi-Task',
-            opacity=0.7,
-            marker_color='#9370DB',
-            nbinsx=20
-        ))
-        
-        fig.update_layout(
-            title="Predicted Answer Length Distribution",
-            xaxis_title="Answer Length (tokens)",
-            yaxis_title="Frequency",
-            barmode='overlay',
-            height=400
-        )
-        
-        st.plotly_chart(fig, width='stretch')
-    
-    with col2:
-        st.markdown("### 📊 Insights")
-        
-        st.info("""
-        **Average Answer Length:**
-        - Ground Truth: 5.2 tokens
-        - Model 1: 8.1 tokens ⚠️
-        - Model 2: 5.0 tokens ✅
-        - Model 3: 5.2 tokens ✅
-        - Model 4: 4.5 tokens ⚠️
-        """)
-        
-        st.warning("""
-        **Observations:**
-        - BERT over-predicts (longer spans)
-        - LayoutLMv3 models well-calibrated
-        - Multi-task is conservative (shorter spans)
-        """)
+    else:
+        st.error("⚠️ Real data not found. Run `python evaluation/extract_answer_lengths.py` first.")
     
     st.markdown("---")
     
@@ -108,64 +179,107 @@ def show_advanced_metrics():
     # ============================================
     st.subheader("2️⃣ Prediction Confidence Analysis")
     
+    # Load real confidence scores
+    confidence_path = Path("evaluation/confidence_scores.json")
+    if confidence_path.exists():
+        with open(confidence_path, 'r') as f:
+            confidence_data = json.load(f)
+    else:
+        st.warning("⚠️ Confidence scores not found. Run extract_confidence_scores.py first.")
+        confidence_data = None
+    
     col1, col2 = st.columns([2, 1])
     
     with col1:
-        # Confidence vs Accuracy plot
-        fig2 = make_subplots(rows=2, cols=2, 
-                            subplot_titles=('Model 1: BERT', 'Model 2: LayoutLMv3',
-                                          'Model 3: +Vision', 'Model 4: Multi-Task'))
-        
-        # Simulate confidence data
-        for idx, (model_name, color) in enumerate(zip(
-            ['BERT', 'LayoutLMv3', '+Vision', 'Multi-Task'],
-            ['#CD7F32', '#C0C0C0', '#FFD700', '#9370DB']
-        )):
-            row = idx // 2 + 1
-            col = idx % 2 + 1
+        if confidence_data:
+            # Confidence vs Accuracy plot with REAL data
+            fig2 = make_subplots(rows=2, cols=2, 
+                                subplot_titles=('Model 1: BERT', 'Model 2: LayoutLMv3',
+                                              'Model 3: +Vision', 'Model 4: Multi-Task'))
             
-            # Simulate: correct predictions have higher confidence
-            correct_conf = np.random.beta(8, 2, 250) * 100
-            incorrect_conf = np.random.beta(2, 5, 277) * 100
+            model_keys = [
+                'Model 1: BERT',
+                'Model 2: LayoutLMv3', 
+                'Model 3: +Vision',
+                'Model 4: Multi-Task'
+            ]
+            colors = ['#CD7F32', '#C0C0C0', '#FFD700', '#9370DB']
             
-            fig2.add_trace(
-                go.Histogram(x=correct_conf, name='Correct', marker_color='green', 
-                           opacity=0.6, showlegend=(idx==0)),
-                row=row, col=col
-            )
-            fig2.add_trace(
-                go.Histogram(x=incorrect_conf, name='Incorrect', marker_color='red', 
-                           opacity=0.6, showlegend=(idx==0)),
-                row=row, col=col
-            )
-        
-        fig2.update_layout(height=600, barmode='overlay', showlegend=True)
-        fig2.update_xaxes(title_text="Confidence (%)")
-        fig2.update_yaxes(title_text="Count")
-        
-        st.plotly_chart(fig2, width='stretch')
+            for idx, (model_key, color) in enumerate(zip(model_keys, colors)):
+                row = idx // 2 + 1
+                col_num = idx % 2 + 1
+                
+                model_stats = confidence_data[model_key]
+                
+                # Convert confidences to percentages
+                correct_conf = [c * 100 for c in model_stats['correct_confidences']]
+                incorrect_conf = [c * 100 for c in model_stats['incorrect_confidences']]
+                
+                fig2.add_trace(
+                    go.Histogram(
+                        x=correct_conf, 
+                        name='Correct', 
+                        marker_color='green', 
+                        opacity=0.6, 
+                        showlegend=(idx==0),
+                        nbinsx=20
+                    ),
+                    row=row, col=col_num
+                )
+                fig2.add_trace(
+                    go.Histogram(
+                        x=incorrect_conf, 
+                        name='Incorrect', 
+                        marker_color='red', 
+                        opacity=0.6, 
+                        showlegend=(idx==0),
+                        nbinsx=20
+                    ),
+                    row=row, col=col_num
+                )
+            
+            fig2.update_layout(height=600, barmode='overlay', showlegend=True)
+            fig2.update_xaxes(title_text="Confidence (%)", range=[0, 100])
+            fig2.update_yaxes(title_text="Count")
+            
+            st.plotly_chart(fig2, use_container_width=True)
+        else:
+            st.info("Run `python extract_confidence_scores.py` to generate real confidence data.")
     
     with col2:
         st.markdown("### 🎯 Calibration")
+        
+        if confidence_data:
+            # Display real statistics
+            st.markdown("**Confidence Gaps (Correct - Incorrect):**")
+            for model_key in ['Model 1: BERT', 'Model 2: LayoutLMv3', 'Model 3: +Vision', 'Model 4: Multi-Task']:
+                stats = confidence_data[model_key]
+                gap = stats['correct_mean'] - stats['incorrect_mean']
+                st.metric(
+                    model_key.split(": ")[1],
+                    f"{gap:.4f}",
+                    f"✓ {stats['correct_mean']:.2f} vs ✗ {stats['incorrect_mean']:.2f}"
+                )
         
         st.success("""
         **Well-Calibrated Models:**
         - Models 2 & 3 show good separation
         - High confidence → Likely correct
-        - Low confidence → Likely incorrect
+        - Vision model most confident (78% on correct)
         """)
         
         st.warning("""
-        **Over-Confident:**
-        - Model 1 (BERT) overconfident on errors
-        - Predicts with high certainty even when wrong
+        **BERT Shows Calibration:**
+        - 67% confidence on correct predictions
+        - 24% confidence on incorrect
+        - Large gap (43%) indicates some calibration
         """)
         
         st.info("""
-        **Under-Confident:**
-        - Model 4 more conservative
-        - Lower confidence overall
-        - Multi-task uncertainty
+        **Multi-Task Under-Confident:**
+        - Only 54% confidence on correct
+        - Lowest of all models
+        - Multi-task uncertainty from dual objectives
         """)
     
     st.markdown("---")
@@ -175,61 +289,105 @@ def show_advanced_metrics():
     # ============================================
     st.subheader("3️⃣ BIO Tagging Confusion Matrix (Model 4)")
     
-    # Create confusion matrix
-    labels = ['O', 'B-ANS', 'I-ANS', 'B-Q', 'I-Q', 'B-H', 'I-H']
+    # Load REAL confusion matrix data
+    conf_matrix_file = Path("evaluation/bio_confusion_matrix.json")
+    if conf_matrix_file.exists():
+        with open(conf_matrix_file, 'r') as f:
+            bio_data = json.load(f)
+        
+        # Extract data
+        conf_matrix = np.array(bio_data["confusion_matrix"])
+        conf_matrix_pct = np.array(bio_data["confusion_matrix_percentages"])
+        labels = bio_data["labels"]
+        
+        # Create confusion matrix heatmap
+        fig3 = go.Figure(data=go.Heatmap(
+            z=conf_matrix_pct,
+            x=labels,
+            y=labels,
+            text=conf_matrix,
+            texttemplate='%{text}',
+            textfont={"size": 10},
+            colorscale='Blues',
+            colorbar=dict(title="% of Actual")
+        ))
+        
+        fig3.update_layout(
+            title="BIO Label Confusion Matrix (Real Data - Normalized by Row)",
+            xaxis_title="Predicted Label",
+            yaxis_title="True Label",
+            height=550,
+            font=dict(size=11)
+        )
+        
+        st.plotly_chart(fig3, use_container_width=True)
+        
+        # Display statistics in two columns
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            st.success("""
+            **✅ Strong Performance:**
+            - **O (Outside)**: 85.3% accuracy
+            - **B-QUESTION**: 78.3% accuracy
+            - **B-ANSWER**: 76.6% accuracy
+            - **I-QUESTION**: 75.4% accuracy
+            
+            Well-distinguished entity boundaries
+            """)
+            
+            st.info(f"""
+            **📊 Total Predictions:**
+            - {bio_data['total_predictions']:,} tokens evaluated
+            - 7 label classes
+            - Validation set: 19 documents
+            """)
+        
+        with col2:
+            st.warning("""
+            **⚠️ Challenges:**
+            - **I-HEADER**: 44.7% accuracy (low)
+            - **B-HEADER**: 48.4% accuracy
+            - Headers harder to detect (only 1-2% of data)
+            - Context confusion: I-HEADER ↔ I-QUESTION
+            """)
+            
+            st.info("""
+            **💡 Insights:**
+            - Entity boundaries (B-tags) easier than continuations (I-tags)
+            - Class imbalance affects header detection
+            - O label dominates (58% of tokens)
+            """)
+        
+        # Add detailed per-class metrics
+        with st.expander("📋 Detailed Per-Class Metrics", expanded=False):
+            # Calculate metrics from confusion matrix
+            metrics_data = []
+            for i, label in enumerate(labels):
+                tp = conf_matrix[i, i]
+                fp = conf_matrix[:, i].sum() - tp
+                fn = conf_matrix[i, :].sum() - tp
+                
+                precision = tp / (tp + fp) if (tp + fp) > 0 else 0
+                recall = tp / (tp + fn) if (tp + fn) > 0 else 0
+                f1 = 2 * precision * recall / (precision + recall) if (precision + recall) > 0 else 0
+                support = conf_matrix[i, :].sum()
+                
+                metrics_data.append({
+                    'Label': label,
+                    'Precision': f"{precision*100:.2f}%",
+                    'Recall': f"{recall*100:.2f}%",
+                    'F1-Score': f"{f1*100:.2f}%",
+                    'Support': int(support)
+                })
+            
+            metrics_df = pd.DataFrame(metrics_data)
+            st.dataframe(metrics_df, hide_index=True, use_container_width=True)
     
-    # Simulated confusion matrix (replace with actual)
-    conf_matrix = np.array([
-        [53140,  500,  300,  400,  200,  100,   50],  # O
-        [  800, 5974,  529,  300,  100,   50,   50],  # B-ANS
-        [  600,  400, 5824,  200,  800,   50,   57],  # I-ANS
-        [  500,  200,  100, 6760,  900,   100,  76],  # B-Q
-        [  400,  100,  600,  700, 7892,   50,  713],  # I-Q
-        [  200,   50,   30,  100,   50,  583,   42],  # B-H
-        [  100,   30,   50,   80,  200,   30,  490],  # I-H
-    ])
+    else:
+        st.error("⚠️ Real confusion matrix not found. Run `python evaluation/extract_bio_confusion.py` first.")
     
-    # Normalize by row (actual labels)
-    conf_matrix_norm = conf_matrix / conf_matrix.sum(axis=1, keepdims=True) * 100
-    
-    fig3 = go.Figure(data=go.Heatmap(
-        z=conf_matrix_norm,
-        x=labels,
-        y=labels,
-        text=conf_matrix,
-        texttemplate='%{text}',
-        textfont={"size": 10},
-        colorscale='Blues',
-        colorbar=dict(title="% of Actual")
-    ))
-    
-    fig3.update_layout(
-        title="BIO Label Confusion Matrix (Normalized by Row)",
-        xaxis_title="Predicted Label",
-        yaxis_title="True Label",
-        height=500
-    )
-    
-    st.plotly_chart(fig3, width='stretch')
-    
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        st.success("""
-        **✅ Strong Diagonal:**
-        - O (Outside) predicted correctly 85%
-        - QUESTION labels well-distinguished
-        - ANSWER B-/I- tags mostly correct
-        """)
-    
-    with col2:
-        st.warning("""
-        **⚠️ Common Confusions:**
-        - I-HEADER ↔ I-QUESTION (mixed context)
-        - B-ANSWER ↔ O (boundary errors)
-        - Header tags have low support (harder to learn)
-        """)
-    
+    st.markdown("---")
     st.markdown("---")
     
     # ============================================
@@ -308,70 +466,90 @@ def show_advanced_metrics():
     # SECTION 5: ERROR ANALYSIS
     # ============================================
     st.subheader("5️⃣ Error Analysis by Question Type")
-    
-    # Simulated error data by question type
-    error_data = pd.DataFrame({
-        'Question Type': ['Date', 'Name', 'Address', 'Amount', 'Other'],
-        'Count': [89, 124, 78, 53, 183],
-        'Model 1 Accuracy': [45, 38, 22, 51, 18],
-        'Model 2 Accuracy': [78, 62, 48, 71, 42],
-        'Model 3 Accuracy': [79, 63, 49, 72, 43],
-        'Model 4 Accuracy': [71, 58, 44, 65, 39]
-    })
-    
-    fig5 = go.Figure()
-    
-    for model, color in zip(
-        ['Model 1', 'Model 2', 'Model 3', 'Model 4'],
-        ['#CD7F32', '#C0C0C0', '#FFD700', '#9370DB']
-    ):
-        fig5.add_trace(go.Bar(
-            name=model,
-            x=error_data['Question Type'],
-            y=error_data[f'{model} Accuracy'],
-            marker_color=color,
-            text=error_data[f'{model} Accuracy'],
-            textposition='outside'
-        ))
-    
-    fig5.update_layout(
-        title="Accuracy by Question Type",
-        xaxis_title="Question Type",
-        yaxis_title="Accuracy (%)",
-        barmode='group',
-        height=400,
-        yaxis=dict(range=[0, 90])
-    )
-    
-    st.plotly_chart(fig5, width='stretch')
-    
-    col1, col2, col3 = st.columns(3)
-    
-    with col1:
-        st.success("""
-        **✅ Easy Questions:**
-        - **Date** (79% accuracy)
-        - **Amount** (72% accuracy)
-        - Structured format helps
-        """)
-    
-    with col2:
+
+    # Load REAL error data
+    error_file = Path("evaluation/error_by_type.json")
+    if error_file.exists():
+        with open(error_file, 'r') as f:
+            error_real = json.load(f)
+        
+        # Convert to DataFrame with REAL data
+        error_data = pd.DataFrame({
+            'Question Type': error_real['categories'],
+            'Count': [error_real['counts'][cat] for cat in error_real['categories']],
+            'Model 1: BERT': [error_real['accuracies']['Model 1: BERT'][cat] for cat in error_real['categories']],
+            'Model 2: LayoutLMv3': [error_real['accuracies']['Model 2: LayoutLMv3'][cat] for cat in error_real['categories']],
+            'Model 3: +Vision': [error_real['accuracies']['Model 3: +Vision'][cat] for cat in error_real['categories']],
+            'Model 4: Multi-Task': [error_real['accuracies']['Model 4: Multi-Task'][cat] for cat in error_real['categories']]
+        })
+        
+        fig5 = go.Figure()
+        
+        for model, color in zip(
+            ['Model 1: BERT', 'Model 2: LayoutLMv3', 'Model 3: +Vision', 'Model 4: Multi-Task'],
+            ['#CD7F32', '#C0C0C0', '#FFD700', '#9370DB']
+        ):
+            fig5.add_trace(go.Bar(
+                name=model,
+                x=error_data['Question Type'],
+                y=error_data[model],
+                marker_color=color,
+                text=[f"{v:.1f}%" for v in error_data[model]],
+                textposition='outside'
+            ))
+        
+        fig5.update_layout(
+            title="Accuracy by Question Type (Real Data)",
+            xaxis_title="Question Type",
+            yaxis_title="Accuracy (%)",
+            barmode='group',
+            height=400,
+            yaxis=dict(range=[0, 80])
+        )
+        
+        st.plotly_chart(fig5, use_container_width=True)
+        
+        # Show sample counts
+        st.caption(f"📊 **Sample counts**: " + 
+                ", ".join([f"{cat}={error_real['counts'][cat]}" for cat in error_real['categories']]))
+        
+        col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            st.success("""
+            **✅ Easy Questions:**
+            - **Date** (73% Vision model)
+            - **Amount** (56.5% Layout/Multi)
+            - Structured format helps
+            """)
+        
+        with col2:
+            st.warning("""
+            **⚠️ Medium Questions:**
+            - **Name** (40.7% Layout)
+            - Variations in format
+            - Multi-word entities
+            """)
+        
+        with col3:
+            st.error("""
+            **❌ Hard Questions:**
+            - **Address** (33.3%, n=6 only!)
+            - **Other** (42% Layout, n=402)
+            - Diverse question types
+            """)
+
+    else:
         st.warning("""
-        **⚠️ Medium Questions:**
-        - **Name** (63% accuracy)
-        - Variations in format
-        - Multi-word entities
+        ⚠️ **Real error analysis data not found.**
+        
+        Run this command to generate it:
+    ```bash
+        python evaluation/extract_error_by_type.py
+    ```
+        
+        This will analyze all 527 validation examples and categorize them by question type.
         """)
-    
-    with col3:
-        st.error("""
-        **❌ Hard Questions:**
-        - **Address** (49% accuracy)
-        - **Other** (43% accuracy)
-        - Long, complex answers
-        """)
-    
-    st.markdown("---")
     
     # ============================================
     # SECTION 6: KEY TAKEAWAYS
@@ -390,4 +568,3 @@ def show_advanced_metrics():
     """)
 
 
-# Add this function to the end of your show_evaluation_tab() in app.py
