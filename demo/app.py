@@ -13,7 +13,7 @@ from openai import OpenAI
 from dotenv import load_dotenv
 import os
 from about import show_about_page
-
+import platform
 # Add project root to path
 project_root = Path(__file__).resolve().parents[1]
 sys.path.append(str(project_root))
@@ -30,7 +30,9 @@ from transformers import (
 from src.Models_src.multitask_model import LayoutLMv3ForMultiTask
 import pytesseract
 from pytesseract import Output
-pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
+# pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
+if platform.system() == 'Windows':
+    pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
 
 load_dotenv()
 
